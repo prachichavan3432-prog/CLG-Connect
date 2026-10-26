@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CLG Connect | Home</title>
+
+    <link rel="stylesheet" href="home.css">
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+
+        <!-- LEFT SIDE -->
+        <div class="nav-left">
+
+            <button class="big-icon" id="searchBtn" title="Search">
+                <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+
+            <button class="big-icon create-btn" id="createBtn" title="Create">
+                <i class="fa-solid fa-plus"></i>
+            </button>
+
+            <div class="small-menu">
+
+                <button class="small-link" id="communitiesBtn">
+                    <i class="fa-solid fa-users"></i>
+                    <span>My Communities</span>
+                </button>
+
+                <button class="small-link" id="myPostsBtn">
+                    <i class="fa-solid fa-file-lines"></i>
+                    <span>My Posts</span>
+                </button>
+
+            </div>
+        </div>
+
+        <!-- RIGHT SIDE -->
+        <div class="nav-right">
+
+            <button class="nav-item" data-panel="saved">
+                <i class="fa-solid fa-bookmark"></i>
+                <span>Saved</span>
+            </button>
+
+            <button class="nav-item" data-panel="favorite">
+                <i class="fa-solid fa-heart"></i>
+                <span>Favorite</span>
+            </button>
+
+            <button class="nav-item" data-panel="account">
+                <i class="fa-solid fa-gear"></i>
+                <span>Settings</span>
+            </button>
+
+            <button class="nav-item" data-panel="profile">
+                <i class="fa-solid fa-user"></i>
+                <span>Profile</span>
+            </button>
+
+        </div>
+    </nav>
+
+
+    <!-- SEARCH PANEL -->
+    <section class="popup-panel" id="searchPanel" hidden>
+
+        <h3>Search CLG Connect</h3>
+
+        <input type="search" id="searchInput"
+               placeholder="Search posts, communities, videos...">
+
+        <div class="search-results" id="searchResults"></div>
+
+    </section>
+
+
+    <!-- CREATE MENU -->
+    <section class="popup-panel create-panel" id="createPanel" hidden>
+
+        <h3>Create something new</h3>
+
+        <button data-create="post">
+            <i class="fa-regular fa-pen-to-square"></i>
+            Create Post
+        </button>
+
+        <button data-create="community">
+            <i class="fa-solid fa-users"></i>
+            Create Community
+        </button>
+
+        <button data-create="video">
+            <i class="fa-solid fa-video"></i>
+            Share Video
+        </button>
+
+        <button data-create="suggestion">
+            <i class="fa-regular fa-lightbulb"></i>
+            Share Suggestion
+        </button>
+
+    </section>
+
+
+    <!-- MAIN PAGE -->
+    <main class="home-layout">
+
+        <!-- LEFT: COMMUNITY CHAT -->
+        <aside class="chat-section">
+
+            <div class="section-heading">
+                <i class="fa-solid fa-comments"></i>
+                <h2>Community Chat</h2>
+            </div>
+
+            <button class="chat-card" data-chat="Campus Talk">
+                <span class="chat-icon">
+                    <i class="fa-solid fa-message"></i>
+                </span>
+
+                <span class="chat-info">
+                    <strong>Campus Talk</strong>
+                    <small>General discussions</small>
+                </span>
+
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+
+            <button class="chat-card" data-chat="Study Group">
+                <span class="chat-icon">
+                    <i class="fa-solid fa-book-open"></i>
+                </span>
+
+                <span class="chat-info">
+                    <strong>Study Group</strong>
+                    <small>Notes and exam help</small>
+                </span>
+
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+
+            <button class="chat-card" data-chat="Campus Events">
+                <span class="chat-icon">
+                    <i class="fa-solid fa-calendar"></i>
+                </span>
+
+                <span class="chat-info">
+                    <strong>Campus Events</strong>
+                    <small>What's happening?</small>
+                </span>
+
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+
+            <button class="outline-btn" id="viewCommunities">
+                <i class="fa-solid fa-compass"></i>
+                Explore Communities
+            </button>
+
+        </aside>
+
+
+        <!-- EXPLORE COMMUNITIES / MY COMMUNITIES -->
+        <section class="communities-panel" id="communitiesPanel" hidden>
+
+            <div class="communities-panel-header">
+
+                <div>
+                    <h2 id="communitiesPanelTitle">
+                        Explore Communities
+                    </h2>
+
+                    <p>Find your people on campus.</p>
+                </div>
+
+                <button type="button"
+                        id="closeCommunitiesPanel"
+                        class="communities-close"
+                        aria-label="Close communities">
+                    &times;
+                </button>
+
+            </div>
+
+            <div class="communities-tabs">
+
+                <button type="button"
+                        class="community-tab active"
+                        data-community-tab="explore">
+                    Explore
+                </button>
+
+                <button type="button"
+                        class="community-tab"
+                        data-community-tab="mine">
+                    My Communities
+                </button>
+
+            </div>
+
+            <div id="communitiesList" class="communities-list"></div>
+
+        </section>
+
+
+        <!-- COMMUNITY CHAT WINDOW -->
+        <section class="chat-window"
+                 id="communityChatWindow"
+                 aria-label="Community chat"
+                 hidden>
+
+            <div class="chat-window-header">
+
+                <div>
+                    <h3 id="chatRoomTitle">Campus Talk</h3>
+                    <small>Community discussion</small>
+                </div>
+
+                <button type="button"
+                        id="closeCommunityChat"
+                        class="chat-close"
+                        aria-label="Close chat">
+                    &times;
+                </button>
+
+            </div>
+
+            <div class="chat-messages"
+                 id="communityChatMessages"
+                 aria-live="polite">
+            </div>
+
+            <form class="chat-input-area" id="communityChatForm">
+
+                <input
+                    type="text"
+                    id="communityChatInput"
+                    placeholder="Write a message..."
+                    maxlength="500"
+                    autocomplete="off"
+                    aria-label="Write a message"
+                    required
+                >
+
+                <button type="submit" aria-label="Send message">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+
+            </form>
+
+        </section>
+
+
+        <!-- MIDDLE: FEED -->
+        <section class="feed-section">
+
+            <!-- RECENT POSTS -->
+            <div class="content-section">
+
+                <div class="section-heading">
+                    <i class="fa-regular fa-clock"></i>
+                    <h2>Recent Posts</h2>
+                </div>
+
+                <div class="post-list" id="recentPosts">
+
+                    <!-- POST 1 -->
+                    <article class="post-card">
+
+                        <div class="post-header">
+
+                            <div class="anonymous-avatar">
+                                <i class="fa-solid fa-user-secret"></i>
+                            </div>
+
+                            <div class="post-author">
+                                <strong>Anonymous Student</strong>
+                                <small>10 minutes ago · Campus Life</small>
+                            </div>
+
+                        </div>
+
+                        <p>
+                            Any tips for preparing for upcoming exams?
+                        </p>
+
+                        <div class="post-actions">
+
+                            <button class="like-btn">
+                                <i class="fa-regular fa-heart"></i>
+                                <span>Like</span>
+                            </button>
+
+                            <button class="comment-btn">
+                                <i class="fa-regular fa-comment"></i>
+                                <span>Comment</span>
+                            </button>
+
+                            <button class="save-btn">
+                                <i class="fa-regular fa-bookmark"></i>
+                                <span>Save</span>
+                            </button>
+
+                        </div>
+
+                        <div class="comment-area" hidden>
+
+                            <input type="text"
+                                   placeholder="Write a comment...">
+
+                            <button class="send-comment">Send</button>
+
+                            <div class="comment-list"></div>
+
+                        </div>
+
+                    </article>
+
+
+                    <!-- POST 2 -->
+                    <article class="post-card">
+
+                        <div class="post-header">
+
+                            <div class="anonymous-avatar avatar-blue">
+                                <i class="fa-solid fa-user-secret"></i>
+                            </div>
+
+                            <div class="post-author">
+                                <strong>Anonymous Student</strong>
+                                <small>25 minutes ago · College Events</small>
+                            </div>
+
+                        </div>
+
+                        <p>
+                            What activities should we organize for our college festival?
+                        </p>
+
+                        <div class="post-actions">
+
+                            <button class="like-btn">
+                                <i class="fa-regular fa-heart"></i>
+                                <span>Like</span>
+                            </button>
+
+                            <button class="comment-btn">
+                                <i class="fa-regular fa-comment"></i>
+                                <span>Comment</span>
+                            </button>
+
+                            <button class="save-btn">
+                                <i class="fa-regular fa-bookmark"></i>
+                                <span>Save</span>
+                            </button>
+
+                        </div>
+
+                        <div class="comment-area" hidden>
+
+                            <input type="text"
+                                   placeholder="Write a comment...">
+
+                            <button class="send-comment">Send</button>
+
+                            <div class="comment-list"></div>
+
+                        </div>
+
+                    </article>
+
+                </div>
+            </div>
+
+
+            <!-- TRENDING TOPICS -->
+            <div class="content-section trending-section">
+
+                <div class="section-heading">
+                    <i class="fa-solid fa-fire"></i>
+                    <h2>Trending Topics &amp; Posts</h2>
+                </div>
+
+                <button class="trending-card"
+                        data-topic="College Festival">
+
+                    <span class="trend-number">01</span>
+
+                    <span class="trend-info">
+                        <strong>College Festival Ideas</strong>
+                        <small>Events · Campus Life</small>
+                    </span>
+
+                    <i class="fa-solid fa-arrow-trend-up"></i>
+
+                </button>
+
+                <button class="trending-card"
+                        data-topic="Exam Preparation">
+
+                    <span class="trend-number">02</span>
+
+                    <span class="trend-info">
+                        <strong>Exam Preparation Tips</strong>
+                        <small>Study · Academics</small>
+                    </span>
+
+                    <i class="fa-solid fa-arrow-trend-up"></i>
+
+                </button>
+
+                <button class="trending-card"
+                        data-topic="Campus Life">
+
+                    <span class="trend-number">03</span>
+
+                    <span class="trend-info">
+                        <strong>Campus Life Discussions</strong>
+                        <small>Community · Discussion</small>
+                    </span>
+
+                    <i class="fa-solid fa-arrow-trend-up"></i>
+
+                </button>
+
+            </div>
+
+
+            <!-- YOUR INTERESTS -->
+            <section class="interests-section">
+
+                <h2>Your Interests</h2>
+
+                <p class="interests-subtitle">
+                    Communities and topics picked for you
+                </p>
+
+                <div id="homeInterests" class="home-interests">
+                    <!-- Interests are loaded by JavaScript -->
+                </div>
+
+            </section>
+
+        </section>
+
+    </main>
+
+
+    <!-- REUSABLE MESSAGE DIALOG -->
+    <dialog id="messageDialog">
+
+        <div class="dialog-content">
+
+            <button class="dialog-close"
+                    id="closeDialog"
+                    aria-label="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <h2 id="dialogTitle">CLG Connect</h2>
+
+            <div id="dialogBody"></div>
+
+        </div>
+
+    </dialog>
+
+
+    <!-- FLOATING AI BUTTON -->
+    <button class="ai-float-btn" id="aiOpen">
+
+        <img src="ai logo.png" alt="AI" class="ai-icon">
+
+        <span>Ask AI</span>
+
+    </button>
+
+
+    <!-- AI CHAT WINDOW -->
+    <dialog class="ai-dialog" id="aiDialog">
+
+        <div class="ai-header">
+
+            <img src="ai logo.png" alt="AI" class="ai-icon">
+
+            <div>
+                <h2>CLG AI Assistant</h2>
+                <p>Campus questions, better posts, fresh ideas</p>
+            </div>
+
+            <button type="button" id="aiClose" class="ai-close">
+                &times;
+            </button>
+
+        </div>
+
+
+        <div class="ai-actions">
+
+            <button type="button"
+                    data-prompt="Suggest communities for college students">
+                Community Ideas
+            </button>
+
+            <button type="button"
+                    data-prompt="Help me improve my campus post">
+                Improve a Post
+            </button>
+
+        </div>
+
+
+        <div class="ai-messages" id="aiMessages">
+
+            <div class="ai-bot">
+                Hi! Ask a campus question or get help with your posts and ideas.
+            </div>
+
+        </div>
+
+
+        <form id="aiForm" class="ai-form">
+
+            <textarea id="aiInput"
+                      placeholder="Ask something..."
+                      required></textarea>
+
+            <button type="submit" aria-label="Send message">
+                ➤
+            </button>
+
+        </form>
+
+        <p class="ai-note">AI demo mode</p>
+
+    </dialog>
+
+
+    <!-- JAVASCRIPT -->
+    <script src="home.js"></script>
+
+</body>
+</html>
