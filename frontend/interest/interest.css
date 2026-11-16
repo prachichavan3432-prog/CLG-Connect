@@ -1,0 +1,351 @@
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'DM Sans', sans-serif;
+    background:
+        radial-gradient(ellipse at 10% 10%, #39204f 0%, transparent 40%),
+        radial-gradient(ellipse at 90% 80%, #302044 0%, transparent 40%),
+        #160e20;
+    color: #f8f2ff;
+    min-height: 100vh;
+}
+
+/* MAIN CONTAINER */
+
+.interest-container {
+    width: 100%;
+    max-width: 1250px;
+    margin: auto;
+    padding: 35px 45px;
+}
+
+/* NAVBAR */
+
+.top-logo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 85px;
+}
+
+.top-logo h2 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 25px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    color: #e5c8ff;
+}
+
+.top-logo span {
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: #d8b5ef;
+    border: 1px solid #70517d;
+    padding: 10px 17px;
+    border-radius: 30px;
+    background: rgba(255,255,255,0.035);
+}
+
+/* HEADER */
+
+.interest-header {
+    text-align: center;
+    max-width: 750px;
+    margin: 0 auto 65px;
+}
+
+.tagline {
+    display: inline-block;
+    color: #d5a8f4;
+    font-size: 11px;
+    letter-spacing: 3px;
+    font-weight: 700;
+    margin-bottom: 22px;
+    background: rgba(190, 130, 220, 0.10);
+    padding: 9px 17px;
+    border-radius: 30px;
+}
+
+.interest-header h1 {
+    font-family: 'Outfit', sans-serif;
+    font-size: clamp(38px, 5vw, 58px);
+    font-weight: 700;
+    letter-spacing: -2px;
+    line-height: 1.15;
+    margin-bottom: 22px;
+}
+
+.interest-header h1 span {
+    color: #d9a8fa;
+    position: relative;
+}
+
+.description {
+    color: #b8a9c3;
+    font-size: 14px;
+    line-height: 1.9;
+    max-width: 620px;
+    margin: auto;
+}
+
+/* SELECTION INFO */
+
+.selection-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    padding-bottom: 17px;
+    border-bottom: 1px solid rgba(255,255,255,0.10);
+}
+
+.selection-info h3 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 19px;
+    font-weight: 600;
+}
+
+.selection-info p {
+    color: #e0b7ff;
+    font-size: 13px;
+    background: rgba(190,130,220,0.10);
+    padding: 9px 15px;
+    border-radius: 25px;
+}
+
+/* INTEREST GRID */
+
+.interest-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 17px;
+}
+
+/* INTEREST CARDS */
+
+.interest-card {
+    position: relative;
+    overflow: hidden;
+    min-height: 175px;
+    padding: 24px 20px;
+
+    background: #251a30;
+    border: 1px solid rgba(224,190,255,0.12);
+    border-radius: 12px;
+
+    cursor: pointer;
+    transition: transform 0.3s ease,
+                background 0.3s ease,
+                border-color 0.3s ease;
+}
+
+/* Different card colors */
+
+.interest-card:nth-child(4n+1) {
+    background: #30213c;
+}
+
+.interest-card:nth-child(4n+2) {
+    background: #252d3d;
+}
+
+.interest-card:nth-child(4n+3) {
+    background: #382536;
+}
+
+.interest-card:nth-child(4n+4) {
+    background: #26352f;
+}
+
+/* Decorative circle */
+
+.interest-card::before {
+    content: "";
+    position: absolute;
+    width: 105px;
+    height: 105px;
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 50%;
+    right: -35px;
+    bottom: -40px;
+    transition: 0.4s ease;
+}
+
+.interest-card:hover::before {
+    transform: scale(1.5);
+}
+
+/* Hover effect */
+
+.interest-card:hover {
+    transform: translateY(-6px);
+    border-color: #c99aeb;
+    filter: brightness(1.15);
+}
+
+/* ICON */
+
+.card-icon {
+    font-size: 29px;
+    margin-bottom: 17px;
+    display: inline-block;
+    transition: transform 0.3s ease;
+}
+
+.interest-card:hover .card-icon {
+    transform: rotate(-8deg) scale(1.12);
+}
+
+/* CARD TEXT */
+
+.interest-card h3 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 17px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #fff3ff;
+}
+
+.interest-card p {
+    font-size: 11px;
+    color: #c1b2ca;
+    line-height: 1.6;
+}
+
+/* SELECTED CARD */
+
+.interest-card.selected {
+    border: 1.5px solid #e1b4ff;
+    background: #493052;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    transform: translateY(-3px);
+}
+
+.interest-card.selected::after {
+    content: "✓";
+    position: absolute;
+    top: 13px;
+    right: 13px;
+
+    width: 25px;
+    height: 25px;
+
+    background: #e6c2ff;
+    color: #392044;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+/* BOTTOM SECTION */
+
+.bottom-section {
+    text-align: center;
+    margin-top: 55px;
+    padding-bottom: 35px;
+}
+
+.bottom-section p {
+    color: #ad9bb9;
+    font-size: 12px;
+    margin-bottom: 20px;
+}
+
+/* CONTINUE BUTTON */
+
+#continueBtn {
+    width: 240px;
+    padding: 16px 25px;
+
+    background: #e0b8f7;
+    color: #281533;
+
+    border: none;
+    border-radius: 8px;
+
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+#continueBtn:hover {
+    background: #f1d8ff;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(205,155,240,0.2);
+}
+
+#continueBtn span {
+    margin-left: 12px;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 900px) {
+    .interest-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+
+    .interest-container {
+        padding: 25px 18px;
+    }
+
+    .top-logo {
+        margin-bottom: 55px;
+    }
+
+    .interest-header {
+        margin-bottom: 40px;
+    }
+
+    .interest-header h1 {
+        font-size: 36px;
+    }
+
+    .interest-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .interest-card {
+        min-height: 155px;
+        padding: 18px 13px;
+    }
+
+    .selection-info h3 {
+        font-size: 15px;
+    }
+
+    .selection-info p {
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 350px) {
+    .interest-grid {
+        grid-template-columns: 1fr;
+    }
+}
+#continueBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
