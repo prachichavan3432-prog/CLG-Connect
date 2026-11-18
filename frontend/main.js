@@ -1,4 +1,5 @@
-
+// CLG-Connect Backend URL
+const API_BASE_URL = "https://clg-connect.onrender.com";
 document.addEventListener("DOMContentLoaded", function () {
 
     // Get all cards
