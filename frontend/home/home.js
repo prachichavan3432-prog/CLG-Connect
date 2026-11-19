@@ -1423,6 +1423,30 @@ async function openProfile() {
         if (!response.ok || !data.user) throw new Error(data.message || "Unable to load profile.");
         loggedInUser = data.user;
         const profile = readAccountStorage("clgProfile", { about: "", interests: [] });
+        let savedInterests = [];
+        try {
+            const interestsResponse = await authenticatedFetch(`${API}/interests`);
+            const interestsData = await interestsResponse.json();
+            if (interestsResponse.ok && Array.isArray(interestsData.interests)) {
+                savedInterests = interestsData.interests;
+            }
+        } catch (interestError) {
+            console.error("Interest loading error:", interestError);
+        }
+        const profileInterests = Array.isArray(profile.interests) ? profile.interests : [];
+        let locallySavedInterests = [];
+        try {
+            const storedInterests = JSON.parse(localStorage.getItem("userInterests") || "[]");
+            if (Array.isArray(storedInterests)) locallySavedInterests = storedInterests;
+        } catch (storageError) {
+            console.warn("Saved local interests could not be read:", storageError);
+        }
+        const interests = profileInterests.length
+            ? profileInterests
+            : savedInterests.length ? savedInterests : locallySavedInterests;
+        const interestMarkup = interests.length
+            ? `<div class="profile-interest-tags">${interests.map(interest => `<span class="profile-interest-tag">${escapeHTML(interest)}</span>`).join("")}</div>`
+            : "<p>No interests selected yet.</p>";
         const myPosts = loadedPosts.filter(post => post.isMine);
         const likedPosts = loadedPosts.filter(post => post.liked);
         const savedPosts = loadedPosts.filter(post => post.saved);
@@ -1443,9 +1467,17 @@ async function openProfile() {
               <article class="activity-card"><i class="fa-regular fa-heart"></i><b>Liked Posts</b><small>Your liked posts</small><strong>${likedPosts.length}</strong></article>
               <article class="activity-card"><i class="fa-regular fa-bookmark"></i><b>Saved Posts</b><small>Your saved posts</small><strong>${savedPosts.length || savedPostIds.size}</strong></article>
             </div></section>
-            <section class="profile-interest-card"><h4>💗 My Interests</h4><p>${escapeHTML(Array.isArray(profile.interests) && profile.interests.length ? profile.interests.join(", ") : "No interests selected yet.")}</p></section>
+            <section class="profile-interest-card"><h4>💗 My Interests</h4>${interestMarkup}</section>
             <section class="profile-stats-grid"><div><b>${myPosts.length}</b><span>Posts</span></div><div><b>${likedPosts.length}</b><span>Liked</span></div><div><b>${savedPosts.length || savedPostIds.size}</b><span>Saved</span></div><div><b>—</b><span>Comments</span></div></section>
-          </div>`;
+          </div>
+          <footer class="profile-logout-section">
+            <button type="button" class="profile-logout-btn" id="profileLogoutBtn"><i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>Log out</button>
+          </footer>`;
+        content.querySelector("#profileLogoutBtn").addEventListener("click", () => {
+            sessionStorage.removeItem("token");
+            sessionStorage.removeItem("user");
+            window.location.replace("../login/login.html");
+        });
         content.querySelector("#editProfileBtn").addEventListener("click", () => {
             const form = document.createElement("div");
             form.className = "profile-edit-form";
@@ -1455,7 +1487,7 @@ async function openProfile() {
             const interestsInput = document.createElement("input");
             interestsInput.type = "text";
             interestsInput.placeholder = "Interests separated by commas";
-            interestsInput.value = Array.isArray(profile.interests) ? profile.interests.join(", ") : "";
+            interestsInput.value = interests.join(", ");
             const saveButton = document.createElement("button");
             saveButton.type = "button";
             saveButton.textContent = "Save Profile";
