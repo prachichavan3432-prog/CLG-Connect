@@ -1,7 +1,8 @@
 require('dotenv').config();
 
-
 const express = require('express');
+const fs = require('fs');
+const path = require('path');
 const cors = require('cors');
 const db = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
@@ -30,14 +31,6 @@ app.use('/api/saved-posts', savedPostRoutes);
 app.use('/api/polls', pollRoutes);
 app.use('/api/interests', interestRoutes);
 
-
-// Home route
-app.get('/', (req, res) => {
-    res.json({
-        message: 'CLG Connect Backend is running'
-    });
-});
-
 // Database connection test
 app.get('/api/health', async (req, res) => {
     try {
@@ -57,8 +50,27 @@ app.get('/api/health', async (req, res) => {
     }
 });
 
+// Serve the existing frontend from the same service so it can call /api directly.
+app.use(express.static(path.join(__dirname, '..', 'frontend')));
+
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-    console.log(`CLG Connect server running on port ${PORT}`);
-});
+async function start() {
+    try {
+        // The schema uses IF NOT EXISTS, so it is safe to apply on each startup.
+        const schema = fs.readFileSync(
+            path.join(__dirname, 'database', 'schema.sql'),
+            'utf8'
+        );
+        await db.query(schema);
+
+        app.listen(PORT, () => {
+            console.log(`CLG Connect server running on port ${PORT}`);
+        });
+    } catch (error) {
+        console.error('Failed to initialize the database:', error);
+        process.exit(1);
+    }
+}
+
+start();
