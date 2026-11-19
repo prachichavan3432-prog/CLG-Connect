@@ -2929,6 +2929,158 @@ body.light-mode .settings-search input {
     cursor: pointer;
 }
 
+dialog:has(.community-detail),
+dialog:has(.community-detail-list) {
+    width: min(760px, 94vw);
+    max-height: 88vh;
+    overflow-y: auto;
+}
+
+.community-detail,
+.community-detail-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.community-description,
+.community-detail-meta {
+    margin: 0;
+    color: var(--muted);
+}
+
+.community-detail-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.community-tab-btn,
+.community-action-btn,
+.community-danger-btn {
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 9px 13px;
+    color: var(--text);
+    background: var(--card);
+    cursor: pointer;
+}
+
+.community-tab-btn.active,
+.community-action-btn {
+    color: #fff;
+    background: #7650d8;
+    border-color: #7650d8;
+}
+
+.community-danger-btn {
+    color: #ffd5d5;
+    border-color: #9c414b;
+    background: #48232a;
+}
+
+.community-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.community-item-info p {
+    margin: 6px 0;
+}
+
+.community-item-info small,
+.community-post-card small,
+.community-member-row small,
+.community-chat-message small {
+    display: block;
+    margin-top: 4px;
+    color: var(--muted);
+}
+
+.community-detail-panel,
+.community-member-list,
+.community-chat-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.community-post-composer,
+.community-post-card,
+.community-member-row,
+.community-chat-message {
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--card);
+}
+
+.community-post-composer textarea,
+.community-post-composer input,
+.community-chat-composer input {
+    width: 100%;
+    margin: 0 0 9px;
+    padding: 11px;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font: inherit;
+}
+
+.community-post-composer textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+.community-member-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 9px;
+}
+
+.community-member-row > div {
+    flex: 1;
+}
+
+.community-chat-feed {
+    max-height: 360px;
+    overflow-y: auto;
+}
+
+.community-chat-message p,
+.community-post-card p {
+    margin-bottom: 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.community-chat-composer {
+    display: flex;
+    gap: 8px;
+}
+
+.community-chat-composer input {
+    flex: 1;
+    margin: 0;
+}
+
+@media (max-width: 520px) {
+    .community-item,
+    .community-member-row {
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .community-chat-composer {
+        flex-direction: column;
+    }
+}
+
 @media (max-width: 480px) {
     .create-post-form {
         gap: 13px;

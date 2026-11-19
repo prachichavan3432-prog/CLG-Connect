@@ -300,7 +300,7 @@ function showCreateForm(type) {
         },
         community: {
             title: "Create a Community",
-            placeholder: "Enter your community name..."
+            placeholder: "Describe the community and what members can share..."
         },
         video: {
             title: "Share a Video",
@@ -323,6 +323,7 @@ function showCreateForm(type) {
     error.hidden = true;
 
     let titleInput = null;
+    let communityNameInput = null;
     let mediaInput = null;
     let preview = null;
     let mediaURL = "";
@@ -343,14 +344,28 @@ function showCreateForm(type) {
         form.append(titleLabel, titleInput);
     }
 
+    if (type === "community") {
+        const nameLabel = document.createElement("label");
+        nameLabel.textContent = "Community name";
+        communityNameInput = document.createElement("input");
+        communityNameInput.type = "text";
+        communityNameInput.maxLength = 100;
+        communityNameInput.required = true;
+        communityNameInput.placeholder = "Give your community a name";
+        communityNameInput.className = "create-title-input";
+        form.append(nameLabel, communityNameInput);
+    }
+
     const descriptionLabel = document.createElement("label");
     descriptionLabel.textContent =
-        type === "post" ? "Description" : "Your content";
+        type === "post" ? "Description" :
+        type === "community" ? "About this community (optional)" :
+        "Your content";
 
     const textarea = document.createElement("textarea");
     textarea.placeholder = config.placeholder;
-    textarea.required = true;
-    textarea.maxLength = type === "community" ? 60 : 2000;
+    textarea.required = type !== "community";
+    textarea.maxLength = type === "community" ? 500 : 2000;
     textarea.className = "create-description-input";
 
     form.append(descriptionLabel, textarea);
@@ -484,7 +499,9 @@ function showCreateForm(type) {
         const value = textarea.value.trim();
         const postTitle = titleInput ? titleInput.value.trim() : "";
 
-        if (!value || (titleInput && !postTitle)) {
+        if ((type !== "community" && !value) ||
+            (communityNameInput && !communityNameInput.value.trim()) ||
+            (titleInput && !postTitle)) {
             error.textContent = "Please fill in all required fields.";
             error.hidden = false;
             return;
@@ -493,44 +510,30 @@ function showCreateForm(type) {
         error.hidden = true;
 
         if (type === "community") {
-            const communities = readAccountStorage(
-                "clgCustomCommunities", []
-            );
-
-            const exists = [
-                ...availableCommunities,
-                ...(Array.isArray(communities) ? communities : [])
-            ].some(community =>
-                community.name.toLowerCase() === value.toLowerCase()
-            );
-
-            if (exists) {
-                error.textContent = "This community already exists.";
-                error.hidden = false;
-                return;
-            }
-
+            submit.disabled = true;
+            submit.textContent = "Creating...";
             try {
-                communities.unshift({
-                    name: value,
-                    description: "A community created by a student",
-                    icon: "fa-users"
+                const response = await authenticatedFetch(`${API}/communities`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        name: communityNameInput.value.trim(),
+                        description: value
+                    })
                 });
-
-                writeAccountStorage("clgCustomCommunities", communities);
-
-                saveJoinedCommunities([
-                    ...getJoinedCommunities(),
-                    value
-                ]);
-
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.message || "Could not create this community.");
+                }
                 dialog.close();
-                openCommunitiesPanel("mine");
+                await openCommunityDetails(data.community.id, "members");
             } catch (err) {
-                error.textContent = "Unable to save this community.";
+                error.textContent = err.message || "Unable to create this community.";
                 error.hidden = false;
+            } finally {
+                submit.disabled = false;
+                submit.textContent = "Create Community";
             }
-
             return;
         }
 
@@ -594,6 +597,7 @@ if (type === "post") {
 
     openDialog(config.title, form);
     if (titleInput) titleInput.focus();
+    else if (communityNameInput) communityNameInput.focus();
 }
 
 
@@ -1206,130 +1210,393 @@ document.querySelectorAll("[data-panel]").forEach(button => {
 });
 
 // =====================================
-// COMMUNITIES - ACCOUNT SPECIFIC
+// SHARED COMMUNITIES, MEMBERS, POSTS AND CHAT
 // =====================================
 
-const availableCommunities = [
-    {
-        name: "Campus Talk",
-        description: "Discuss campus life and share your thoughts.",
-        icon: "💬"
-    },
-    {
-        name: "Study Group",
-        description: "Share notes and prepare for exams together.",
-        icon: "📚"
-    },
-    {
-        name: "Campus Events",
-        description: "Discover college events and activities.",
-        icon: "🎉"
+let communityChatTimer = null;
+let communityViewVersion = 0;
+let activeCommunityChatId = null;
+let communityChatGeneration = 0;
+
+function stopCommunityChatPolling() {
+    if (communityChatTimer) window.clearInterval(communityChatTimer);
+    communityChatTimer = null;
+    activeCommunityChatId = null;
+    communityChatGeneration += 1;
+}
+
+dialog.addEventListener("close", () => {
+    stopCommunityChatPolling();
+    communityViewVersion += 1;
+});
+
+async function communityRequest(url, options = {}) {
+    const response = await authenticatedFetch(url, options);
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+        throw new Error(data.message || "Community request failed.");
     }
-];
-
-function getJoinedCommunities() {
-    return readAccountStorage("clgJoinedCommunities", []);
+    return data;
 }
 
-function saveJoinedCommunities(communities) {
-    writeAccountStorage("clgJoinedCommunities", communities);
+function makeCommunityButton(label, action, className = "community-action-btn") {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = className;
+    button.textContent = label;
+    button.addEventListener("click", action);
+    return button;
 }
 
-function getCustomCommunities() {
-    return readAccountStorage("clgCustomCommunities", []);
-}
-
-function saveCustomCommunities(communities) {
-    writeAccountStorage("clgCustomCommunities", communities);
-}
-
-function getAllCommunities() {
-    return [
-        ...availableCommunities,
-        ...getCustomCommunities()
-    ];
-}
-
-function joinCommunity(name) {
-    const joined = getJoinedCommunities();
-
-    if (!joined.includes(name)) {
-        joined.push(name);
-        saveJoinedCommunities(joined);
-    }
-
-    openCommunitiesPanel("explore");
-}
-
-function leaveCommunity(name) {
-    const joined = getJoinedCommunities();
-
-    saveJoinedCommunities(
-        joined.filter(item => item !== name)
-    );
-
-    openCommunitiesPanel("mine");
-}
-
-function openCommunitiesPanel(mode = "explore") {
-    const communities = getAllCommunities();
-    const joined = getJoinedCommunities();
-
-    const visibleCommunities = mode === "mine"
-        ? communities.filter(item => joined.includes(item.name))
-        : communities;
-
+async function openCommunitiesPanel(mode = "explore") {
+    stopCommunityChatPolling();
+    const viewVersion = ++communityViewVersion;
     const content = document.createElement("div");
     content.className = "communities-content";
+    content.textContent = "Loading communities...";
+    openDialog(mode === "mine" ? "My Communities" : "Explore Communities", content);
 
-    const heading = document.createElement("h3");
-    heading.textContent = mode === "mine"
-        ? "My Communities"
-        : "Explore Communities";
+    try {
+        const data = await communityRequest(`${API}/communities`);
+        if (viewVersion !== communityViewVersion) return;
 
-    content.appendChild(heading);
+        content.replaceChildren();
+        const intro = document.createElement("p");
+        intro.textContent = mode === "mine"
+            ? "Communities you have joined, with their members and discussions."
+            : "Find a community, meet members, and join the discussion.";
+        content.appendChild(intro);
 
-    if (visibleCommunities.length === 0) {
-        const empty = document.createElement("p");
-        empty.textContent = mode === "mine"
-            ? "You haven't joined any communities yet."
-            : "No communities are available.";
-        content.appendChild(empty);
-    }
+        const switcher = document.createElement("div");
+        switcher.className = "community-detail-tabs";
+        switcher.append(
+            makeCommunityButton("Explore", () => openCommunitiesPanel("explore"), mode === "explore" ? "community-tab-btn active" : "community-tab-btn"),
+            makeCommunityButton("My Communities", () => openCommunitiesPanel("mine"), mode === "mine" ? "community-tab-btn active" : "community-tab-btn"),
+            makeCommunityButton("＋ Create", () => showCreateForm("community"), "community-action-btn")
+        );
+        content.appendChild(switcher);
 
-    visibleCommunities.forEach(community => {
-        const item = document.createElement("div");
-        item.className = "community-item";
+        const list = document.createElement("div");
+        list.className = "community-detail-list";
+        const communities = (Array.isArray(data.communities) ? data.communities : [])
+            .filter(item => mode !== "mine" || item.is_member);
 
-        const name = document.createElement("h4");
-        name.textContent = `${community.icon || "👥"} ${community.name}`;
+        if (!communities.length) {
+            const empty = document.createElement("p");
+            empty.className = "community-empty";
+            empty.textContent = mode === "mine"
+                ? "You have not joined a community yet. Explore communities to find one."
+                : "No communities are available yet. Create the first one.";
+            list.appendChild(empty);
+        }
 
-        const description = document.createElement("p");
-        description.textContent = community.description || "";
-
-        const button = document.createElement("button");
-        button.type = "button";
-
-        const isJoined = joined.includes(community.name);
-
-        button.textContent = isJoined ? "Leave" : "Join";
-
-        button.addEventListener("click", () => {
-            if (isJoined) {
-                leaveCommunity(community.name);
-            } else {
-                joinCommunity(community.name);
-            }
+        communities.forEach(community => {
+            const item = document.createElement("article");
+            item.className = "community-item";
+            const info = document.createElement("div");
+            info.className = "community-item-info";
+            const name = document.createElement("strong");
+            name.textContent = community.name;
+            const description = document.createElement("p");
+            description.textContent = community.description || "A campus community.";
+            const meta = document.createElement("small");
+            meta.textContent = `${community.members_count} ${Number(community.members_count) === 1 ? "member" : "members"}${community.my_role ? ` · ${community.my_role}` : ""}`;
+            info.append(name, description, meta);
+            const action = community.is_member
+                ? makeCommunityButton("Open", () => openCommunityDetails(community.id))
+                : makeCommunityButton("Join", async event => {
+                    event.currentTarget.disabled = true;
+                    try {
+                        await communityRequest(`${API}/communities/${community.id}/join`, { method: "POST" });
+                        await openCommunityDetails(community.id, "members");
+                    } catch (error) {
+                        alert(error.message);
+                        event.currentTarget.disabled = false;
+                    }
+                });
+            item.append(info, action);
+            list.appendChild(item);
         });
+        content.appendChild(list);
+    } catch (error) {
+        if (viewVersion !== communityViewVersion) return;
+        content.replaceChildren();
+        const message = document.createElement("p");
+        message.className = "community-empty";
+        message.textContent = error.message;
+        content.appendChild(message);
+    }
+}
 
-        item.append(name, description, button);
-        content.appendChild(item);
+async function openCommunityDetails(communityId, selectedTab = "posts") {
+    stopCommunityChatPolling();
+    const viewVersion = ++communityViewVersion;
+    const loading = document.createElement("p");
+    loading.className = "community-empty";
+    loading.textContent = "Loading community...";
+    openDialog("Community", loading);
+
+    try {
+        const data = await communityRequest(`${API}/communities/${communityId}`);
+        if (viewVersion !== communityViewVersion) return;
+        const content = document.createElement("div");
+        content.className = "community-detail";
+        const description = document.createElement("p");
+        description.className = "community-description";
+        description.textContent = data.community.description || "A campus community.";
+        const meta = document.createElement("p");
+        meta.className = "community-detail-meta";
+        meta.textContent = `${data.members.length} ${data.members.length === 1 ? "member" : "members"} · Led by ${data.community.leader_name}`;
+        const tabs = document.createElement("div");
+        tabs.className = "community-detail-tabs";
+        const panel = document.createElement("section");
+        panel.className = "community-detail-panel";
+        content.append(description, meta, tabs, panel);
+        let tabRequestId = 0;
+
+        const renderTab = async tab => {
+            stopCommunityChatPolling();
+            const currentTabId = ++tabRequestId;
+            const isCurrentTab = () =>
+                viewVersion === communityViewVersion && currentTabId === tabRequestId;
+            panel.replaceChildren();
+            tabs.replaceChildren();
+            ["posts", "members", "chat"].forEach(name => {
+                tabs.appendChild(makeCommunityButton(
+                    name[0].toUpperCase() + name.slice(1),
+                    () => renderTab(name),
+                    name === tab ? "community-tab-btn active" : "community-tab-btn"
+                ));
+            });
+
+            if (tab === "posts") {
+                await renderCommunityPosts(communityId, data.my_role, panel, isCurrentTab);
+            } else if (tab === "members") {
+                renderCommunityMembers(communityId, data, panel, () => openCommunityDetails(communityId, "members"));
+            } else {
+                await renderCommunityChat(communityId, panel, isCurrentTab);
+            }
+        };
+
+        openDialog(data.community.name, content);
+        await renderTab(selectedTab);
+    } catch (error) {
+        if (viewVersion !== communityViewVersion) return;
+        const message = document.createElement("p");
+        message.className = "community-empty";
+        message.textContent = error.message;
+        openDialog("Community", message);
+    }
+}
+
+async function renderCommunityPosts(communityId, myRole, panel, isCurrentTab) {
+    const composer = document.createElement("form");
+    composer.className = "community-post-composer";
+    const title = document.createElement("input");
+    title.placeholder = "Post title (optional)";
+    title.maxLength = 200;
+    const text = document.createElement("textarea");
+    text.placeholder = "Share something with this community...";
+    text.maxLength = 2000;
+    text.required = true;
+    const submit = document.createElement("button");
+    submit.type = "submit";
+    submit.className = "community-action-btn";
+    submit.textContent = "Share post";
+    composer.append(title, text, submit);
+    composer.addEventListener("submit", async event => {
+        event.preventDefault();
+        submit.disabled = true;
+        try {
+            await communityRequest(`${API}/posts`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title: title.value.trim(), content: text.value.trim(), community_id: communityId })
+            });
+            await openCommunityDetails(communityId, "posts");
+        } catch (error) {
+            alert(error.message);
+            submit.disabled = false;
+        }
     });
+    panel.appendChild(composer);
 
-    openDialog(
-        mode === "mine" ? "My Communities" : "Explore Communities",
-        content
-    );
+    try {
+        const data = await communityRequest(`${API}/communities/${communityId}/posts`);
+        if (!isCurrentTab()) return;
+        if (!data.posts.length) {
+            const empty = document.createElement("p");
+            empty.className = "community-empty";
+            empty.textContent = "No posts yet. Start the conversation with a post.";
+            panel.appendChild(empty);
+        }
+        data.posts.forEach(post => {
+            const card = document.createElement("article");
+            card.className = "community-post-card";
+            const author = document.createElement("strong");
+            author.textContent = post.username;
+            const date = document.createElement("small");
+            date.textContent = new Date(post.created_at).toLocaleString();
+            const body = document.createElement("p");
+            body.textContent = post.content;
+            card.append(author, date);
+            if (post.title) {
+                const heading = document.createElement("h4");
+                heading.textContent = post.title;
+                card.appendChild(heading);
+            }
+            card.appendChild(body);
+            if (post.is_mine || myRole === "leader") {
+                card.appendChild(makeCommunityButton("Delete post", async () => {
+                    if (!confirm("Delete this post?")) return;
+                    try {
+                        await communityRequest(`${API}/posts/${post.id}`, { method: "DELETE" });
+                        await openCommunityDetails(communityId, "posts");
+                    } catch (error) {
+                        alert(error.message);
+                    }
+                }, "community-danger-btn"));
+            }
+            panel.appendChild(card);
+        });
+    } catch (error) {
+        if (!isCurrentTab()) return;
+        const message = document.createElement("p");
+        message.className = "community-empty";
+        message.textContent = error.message;
+        panel.appendChild(message);
+    }
+}
+
+function renderCommunityMembers(communityId, data, panel, refresh) {
+    const members = document.createElement("div");
+    members.className = "community-member-list";
+    const leaderControls = data.my_role === "leader";
+
+    data.members.forEach(member => {
+        const row = document.createElement("article");
+        row.className = "community-member-row";
+        const identity = document.createElement("div");
+        const name = document.createElement("strong");
+        name.textContent = member.username;
+        const role = document.createElement("small");
+        role.textContent = member.role;
+        identity.append(name, role);
+        row.appendChild(identity);
+
+        if (leaderControls && member.role !== "leader") {
+            const roleButton = makeCommunityButton(
+                member.role === "admin" ? "Remove admin" : "Make admin",
+                async () => {
+                    try {
+                        await communityRequest(`${API}/communities/${communityId}/members/${member.id}/role`, {
+                            method: "PUT",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ role: member.role === "admin" ? "member" : "admin" })
+                        });
+                        await refresh();
+                    } catch (error) { alert(error.message); }
+                }
+            );
+            const removeButton = makeCommunityButton("Remove", async () => {
+                if (!confirm(`Remove ${member.username} from this community?`)) return;
+                try {
+                    await communityRequest(`${API}/communities/${communityId}/members/${member.id}`, { method: "DELETE" });
+                    await refresh();
+                } catch (error) { alert(error.message); }
+            }, "community-danger-btn");
+            row.append(roleButton, removeButton);
+        }
+        members.appendChild(row);
+    });
+    panel.appendChild(members);
+
+    if (data.my_role !== "leader") {
+        panel.appendChild(makeCommunityButton("Leave community", async () => {
+            if (!confirm("Leave this community?")) return;
+            try {
+                await communityRequest(`${API}/communities/${communityId}/leave`, { method: "DELETE" });
+                await openCommunitiesPanel("mine");
+            } catch (error) { alert(error.message); }
+        }, "community-danger-btn"));
+    }
+}
+
+async function renderCommunityChat(communityId, panel, isCurrentTab) {
+    const chatGeneration = ++communityChatGeneration;
+    const messages = document.createElement("div");
+    messages.className = "community-chat-feed";
+    messages.setAttribute("aria-live", "polite");
+    const form = document.createElement("form");
+    form.className = "community-chat-composer";
+    const input = document.createElement("input");
+    input.maxLength = 500;
+    input.placeholder = "Write a message to members...";
+    input.required = true;
+    const send = document.createElement("button");
+    send.type = "submit";
+    send.className = "community-action-btn";
+    send.textContent = "Send";
+    form.append(input, send);
+    panel.append(messages, form);
+
+    let lastMessageId = 0;
+    const appendMessages = async () => {
+        const data = await communityRequest(`${API}/communities/${communityId}/messages?afterId=${lastMessageId}`);
+        if (!isCurrentTab() ||
+            chatGeneration !== communityChatGeneration ||
+            activeCommunityChatId !== String(communityId)) return;
+        data.messages.forEach(message => {
+            const item = document.createElement("article");
+            item.className = "community-chat-message";
+            const heading = document.createElement("strong");
+            heading.textContent = message.username;
+            const time = document.createElement("small");
+            time.textContent = new Date(message.created_at).toLocaleTimeString();
+            const text = document.createElement("p");
+            text.textContent = message.content;
+            item.append(heading, time, text);
+            messages.appendChild(item);
+            lastMessageId = Math.max(lastMessageId, Number(message.id));
+        });
+        if (messages.childElementCount) messages.scrollTop = messages.scrollHeight;
+    };
+
+    activeCommunityChatId = String(communityId);
+    try {
+        await appendMessages();
+    } catch (error) {
+        if (!isCurrentTab() || chatGeneration !== communityChatGeneration) return;
+        const empty = document.createElement("p");
+        empty.className = "community-empty";
+        empty.textContent = error.message;
+        messages.appendChild(empty);
+    }
+    if (!isCurrentTab() || chatGeneration !== communityChatGeneration) return;
+    communityChatTimer = window.setInterval(() => {
+        appendMessages().catch(error => console.error("Community chat refresh failed:", error));
+    }, 3000);
+
+    form.addEventListener("submit", async event => {
+        event.preventDefault();
+        const content = input.value.trim();
+        if (!content) return;
+        send.disabled = true;
+        try {
+            await communityRequest(`${API}/communities/${communityId}/messages`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ content })
+            });
+            input.value = "";
+            await appendMessages();
+        } catch (error) {
+            alert(error.message);
+        } finally {
+            send.disabled = false;
+            input.focus();
+        }
+    });
 }
 
 // =====================================
