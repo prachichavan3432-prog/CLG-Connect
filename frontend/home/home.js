@@ -16,7 +16,7 @@ function checkLogin() {
 checkLogin();
 window.addEventListener("pageshow", checkLogin);
 
-const API = "http://localhost:3000/api";
+const API = "/api";
 const token = sessionStorage.getItem("token");
 
 let currentUserId = null;
