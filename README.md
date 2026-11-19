@@ -8,6 +8,12 @@ This repository includes a `render.yaml` Blueprint. In Render, choose **New +** 
 
 The Blueprint uses Render's free plans. Free PostgreSQL databases expire after 30 days, so use a paid database plan if you need the deployed data to persist beyond that period.
 
+## Communities
+
+Communities, memberships, roles, posts, and chat messages are stored in PostgreSQL. The first signed-in user initializes the starter communities and is their leader. Community creators are leaders; leaders can promote members to admin, remove members, and delete posts from their community. Members can post and chat. Chat refreshes automatically while its tab is open.
+
+The backend applies the community role and chat table migrations from `backend/database/schema.sql` when it starts.
+
 ## Password reset email setup
 
 Password reset sends a one-time code through the Gmail API over HTTPS. Render's free web services block SMTP ports, so a Gmail App Password used with SMTP will not work.
