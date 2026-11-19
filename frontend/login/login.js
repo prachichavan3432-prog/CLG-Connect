@@ -49,7 +49,7 @@ form.addEventListener("submit", async function(event) {
     message.style.color = "blue";
 
     try {
-        const response = await fetch("https://clg-connect.onrender.com/api/auth/login", {
+        const response = await fetch("/api/auth/login", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
