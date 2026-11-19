@@ -56,6 +56,28 @@ CREATE TABLE IF NOT EXISTS community_members (
     UNIQUE (community_id, user_id)
 );
 
+-- Community roles: the creator leads the community, and leaders may promote members to admins.
+ALTER TABLE community_members
+ADD COLUMN IF NOT EXISTS role VARCHAR(10) NOT NULL DEFAULT 'member';
+
+-- Keep existing community creators as leaders after this migration is applied.
+INSERT INTO community_members (community_id, user_id, role)
+SELECT id, created_by, 'leader'
+FROM communities
+ON CONFLICT (community_id, user_id)
+DO UPDATE SET role = 'leader';
+
+-- Persistent community chat messages.
+CREATE TABLE IF NOT EXISTS community_messages (
+    id BIGSERIAL PRIMARY KEY,
+    community_id INTEGER NOT NULL REFERENCES communities(id)
+        ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id)
+        ON DELETE CASCADE,
+    content VARCHAR(500) NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 -- 5. POSTS TABLE
 CREATE TABLE IF NOT EXISTS posts (
     id SERIAL PRIMARY KEY,
@@ -163,6 +185,9 @@ ON comments(post_id);
 
 CREATE INDEX IF NOT EXISTS idx_members_user
 ON community_members(user_id);
+
+CREATE INDEX IF NOT EXISTS idx_community_messages_feed
+ON community_messages(community_id, id DESC);
 
 CREATE INDEX IF NOT EXISTS idx_polls_community
 ON polls(community_id);
