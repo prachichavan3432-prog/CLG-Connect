@@ -70,7 +70,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         try {
             const response = await fetch(
-                "http://localhost:3000/api/interests",
+                "/api/interests",
                 {
                     method: "POST",
                     headers: {
