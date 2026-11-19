@@ -1,9 +1,9 @@
 services:
   - type: web
-    name: clg-connect-prachichavan3432
+    name: CLG-Connect
     runtime: node
     plan: free
-    region: singapore
+    region: virginia
     buildCommand: cd backend && npm install
     startCommand: cd backend && npm start
     healthCheckPath: /api/health
