@@ -142,7 +142,7 @@ exports.updatePost = async (req, res) => {
 };
 
 
-// DELETE OWN POST
+// Authors can delete their own posts. Community leaders can also moderate posts in their community.
 exports.deletePost = async (req, res) => {
     try {
         const postId = Number(req.params.postId);
@@ -152,9 +152,19 @@ exports.deletePost = async (req, res) => {
         }
 
         const result = await db.query(
-            `DELETE FROM posts
-             WHERE id = $1 AND user_id = $2
-             RETURNING id`,
+            `DELETE FROM posts p
+             WHERE p.id = $1
+               AND (
+                    p.user_id = $2
+                    OR EXISTS (
+                        SELECT 1
+                        FROM community_members cm
+                        WHERE cm.community_id = p.community_id
+                          AND cm.user_id = $2
+                          AND cm.role = 'leader'
+                    )
+               )
+             RETURNING p.id`,
             [postId, req.user.id]
         );
 
