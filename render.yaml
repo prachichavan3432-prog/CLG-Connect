@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: clg-connect-prachichavan3432
+    runtime: node
+    plan: free
+    region: singapore
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: clg-connect-db-prachichavan3432
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+
+databases:
+  - name: clg-connect-db-prachichavan3432
+    databaseName: clgconnect
+    user: clgconnect
+    plan: free
+    region: singapore
